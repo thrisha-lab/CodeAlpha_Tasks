@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// User: registered account. Password is stored as a bcrypt hash (never raw).
+// ---------------------------------------------------------------------------
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  username       String    @unique
+  email          String    @unique
+  password       String
+  bio            String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  meetings       Meeting[] @relation("MeetingCreator")
+  participations MeetingParticipant[]
+}
+
+// ---------------------------------------------------------------------------
+// Meeting: a room. `roomId` is the short human-shareable secure ID.
+// NOTE: raw video/audio streams are NEVER stored here (or anywhere) —
+// media is peer-to-peer via WebRTC. Only metadata lives in the DB.
+// ---------------------------------------------------------------------------
+model Meeting {
+  id           String    @id @default(cuid())
+  roomId       String    @unique
+  title        String
+  createdById  String
+  createdBy    User      @relation("MeetingCreator", fields: [createdById], references: [id])
+  createdAt    DateTime  @default(now())
+  endedAt      DateTime?
+  participants MeetingParticipant[]
+
+  @@index([createdById])
+}
+
+// ---------------------------------------------------------------------------
+// MeetingParticipant: join/leave audit trail for a meeting.
+// ---------------------------------------------------------------------------
+model MeetingParticipant {
+  id        String    @id @default(cuid())
+  meetingId String
+  meeting   Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+
+  @@index([meetingId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// SharedFile: metadata for files uploaded into a meeting. The binary content
+// lives on disk (uploads/), never in the database, and is streamed through an
+// authenticated API route.
+// ---------------------------------------------------------------------------
+model SharedFile {
+  id           String   @id @default(cuid())
+  roomId       String
+  uploaderId   String
+  uploaderName String
+  filename     String
+  mimeType     String
+  size         Int
+  storedPath   String
+  createdAt    DateTime @default(now())
+
+  @@index([roomId])
+}
