@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Builds
+client/dist/
+dist/
+build/
+.next/
+
+# Environment variables (keep *.example only)
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+
+# Uploaded user content (runtime data)
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Local database files / binaries (sandbox demo artifacts)
+data/
+mongodb/
+*.db
+
+# Logs
+*.log
+dev.log
+server.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Sandbox tooling (not part of the app)
+.zscripts/
+scripts/mongo-dl/
