@@ -1,0 +1,95 @@
+// Prisma schema for ShopSphere e-commerce
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("customer") // "customer" | "admin"
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  image     String?
+  createdAt DateTime @default(now())
+
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  price       Float
+  image       String
+  images      String   @default("") // comma-separated URLs (SQLite has no list type)
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  rating      Float    @default(0)
+  numReviews  Int      @default(0)
+  stock       Int      @default(0)
+  featured    Boolean  @default(false)
+  isNew       Boolean  @default(false)
+  brand       String   @default("ShopSphere")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems OrderItem[]
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items          OrderItem[]
+  itemsTotal     Float
+  shippingTotal  Float        @default(0)
+  taxTotal       Float        @default(0)
+  total          Float
+  status         String      @default("pending") // pending | processing | shipped | delivered | cancelled
+  // Shipping address stored as JSON string (SQLite-friendly)
+  shippingName   String
+  shippingEmail  String
+  shippingPhone  String
+  shippingAddress String
+  shippingCity    String
+  shippingState   String
+  shippingZip     String
+  shippingCountry String
+  paymentMethod  String      @default("cod")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product? @relation(fields: [productId], references: [id])
+  name      String
+  price     Float
+  quantity  Int
+  image     String
+}
